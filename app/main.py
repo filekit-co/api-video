@@ -6,7 +6,6 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.logger import logger
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi_utils.timing import add_timing_middleware
 
 from app.api import download, greet
@@ -22,8 +21,7 @@ app.add_middleware(
 )
 add_timing_middleware(app, record=logging.error, prefix="app", exclude="untimed")
 
-# TODO check (from fastapi.responses import FileResponse)
-app.mount("/files", StaticFiles(directory="downloads"), name="downloads")
+
 
 routers = [
     greet.router,
