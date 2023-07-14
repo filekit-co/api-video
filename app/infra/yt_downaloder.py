@@ -31,6 +31,8 @@ ydl_opts = {
 }
 
 
+SUPPORTED_AUDIO_EXTS = ['mp3', 'aac', 'm4a', 'opus', 'vorbis', 'flac', 'alac', 'wav']
+
 class Downloader(YoutubeDL):
 
     def __init__(self):
@@ -52,5 +54,5 @@ class Downloader(YoutubeDL):
             return ""
         return f"{info['id']}.{info['extractor']}.{info['ext']}"
 
-    def mp3_mode(self):
-        self.add_post_processor(FFmpegExtractAudioPP(preferredcodec='mp3'))
+    def to_audio(self, ext: str):
+        self.add_post_processor(FFmpegExtractAudioPP(preferredcodec=ext))
