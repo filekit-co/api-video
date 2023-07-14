@@ -6,11 +6,12 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.logger import logger
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi_utils.timing import add_timing_middleware
 
-from app.api import greet
+from app.api import download, greet
 
-app = FastAPI(title='Video api server')
+app = FastAPI(title='HDHA api server')
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,10 +22,16 @@ app.add_middleware(
 )
 add_timing_middleware(app, record=logging.error, prefix="app", exclude="untimed")
 
+# TODO check (from fastapi.responses import FileResponse)
+app.mount("/files", StaticFiles(directory="downloads"), name="downloads")
 
 routers = [
     greet.router,
+    download.router,
 ]
+
+logger.error(routers)
+
 for router in routers:
     app.include_router(router)
 
@@ -41,5 +48,4 @@ async def add_custom_header(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    logger.info("start")
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get('PORT', 8000)), log_level="info")

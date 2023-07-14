@@ -1,2 +1,4 @@
-src/poetry.lock
-src/pyproject.toml
+app/poetry.lock
+app/pyproject.toml
+downloads/*
+__pycache__/
