@@ -5,9 +5,9 @@ from pydantic import BaseModel
 
 class VideoInfo(BaseModel):
     title: str
-    thumbUrl: str
-    url: str
-    site: str    
+    thumbUrl: Optional[str]
+    url: Optional[str]
+    site: Optional[str]
 
 class ProgressInfo(BaseModel):
     download_id : int

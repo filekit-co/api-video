@@ -1,13 +1,14 @@
 import io
-import logging
 from contextlib import redirect_stdout
 from enum import Enum
 
-from fastapi import APIRouter, File, Query, Response, UploadFile, status
+from fastapi import APIRouter, HTTPException, Response
 from infra.yt_downaloder import Downloader
 from utils import content_disposition, get_mimetype
 
-router = APIRouter(prefix='/download')
+from app.models import VideoInfo
+
+router = APIRouter()
 
 # https://github.com/yt-dlp/yt-dlp/issues/3298#issuecomment-1181754989
 def download(url: str) -> bytes:
@@ -47,3 +48,19 @@ async def download(
             },
         media_type=get_mimetype('.mp3'),
     )
+
+
+@router.post("/info")
+async def info(url: str):
+    with Downloader() as ydl:
+        info = ydl.get_info(url)
+
+        if info is None:
+            raise HTTPException(status_code=404, detail="URL not supported")
+        else:
+            return VideoInfo(
+                title=info.get('title'),
+                thumbUrl=info.get('thumbnail'),
+                site=info.get('webpage_url_domain'),
+                url=info.get('webpage_url')
+            )
