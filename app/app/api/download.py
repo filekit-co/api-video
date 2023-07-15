@@ -1,30 +1,43 @@
-import io
-from contextlib import redirect_stdout
-from enum import Enum
+import logging
 
 from fastapi import APIRouter, HTTPException, Response
-from infra.yt_downaloder import SUPPORTED_AUDIO_EXTS, AudioTypeEnum, Downloader
+from infra.yt_downaloder import (SUPPORTED_AUDIO_EXTS, SUPPORTED_VIDEO_EXTS,
+                                 AudioTypeEnum, Downloader, VideoTypeEnum,
+                                 download_audio, download_video)
 from utils import content_disposition, get_mimetype
 
 from app.models import VideoInfo
 
 router = APIRouter()
 
-# https://github.com/yt-dlp/yt-dlp/issues/3298#issuecomment-1181754989
-def download_audio(url: str, to_ext: str) -> bytes:
-    with io.BytesIO() as buffer:
-        with redirect_stdout(buffer), Downloader() as ydl:
-            ydl.to_audio(to_ext)
-            ydl.download([url])
-            return buffer.getvalue()
+@router.post(
+        path="/info",
+        tags=["Download"],
+        summary="Download target url info",
+        )
+async def info(url: str):
+    with Downloader() as ydl:    
+        info = ydl.get_info(url)
+        logging.error(info)
+        if info is None:
+            raise HTTPException(status_code=400, detail="URL not supported")
+        else:
+            return VideoInfo(
+                title=info.get('title'),
+                thumbUrl=info.get('thumbnail'),
+                url=info.get('webpage_url'),
+                filesize_approx=info.get('filesize_approx'),
+
+            )
+
 
 @router.post(
-        path="/download",
-        tags=["Download to x"],
-        summary="Download to x",
+        path="/download/audio",
+        tags=["Download"],
+        summary="Download to audio x",
         description=f"audio x is types of {SUPPORTED_AUDIO_EXTS}",
     )
-async def download(
+async def audio(
         url: str,
         filename: str,
         to: AudioTypeEnum,
@@ -32,8 +45,7 @@ async def download(
     if to in SUPPORTED_AUDIO_EXTS:
         out_bytes = download_audio(url, to)
     else:
-        # TODO: not audio
-        ...
+        raise HTTPException(status_code=400, detail=f"{to} is not supported")
     
     out_filename = f'{filename}.{to}'
 
@@ -46,18 +58,30 @@ async def download(
     )
 
 
-@router.post("/info")
-async def info(url: str):
-    # filename = ydl.get_filename(url)
-    
-    with Downloader() as ydl:    
-        info = ydl.get_info(url)
+@router.post(
+        path="/download/video",
+        tags=["Download"],
+        summary="Download to video",
+        description=f"video x is types of {SUPPORTED_VIDEO_EXTS}",
+    )
+async def video(
+        url: str,
+        filename: str,
+        to: VideoTypeEnum,
+        height: int,
+    ):
 
-        if info is None:
-            raise HTTPException(status_code=404, detail="URL not supported")
-        else:
-            return VideoInfo(
-                title=info.get('title'),
-                thumbUrl=info.get('thumbnail'),
-                url=info.get('webpage_url')
-            )
+    if to in SUPPORTED_VIDEO_EXTS:
+        out_bytes = download_video(url, to, height)
+    else:
+        raise HTTPException(status_code=400, detail=f"{to} is not supported")
+    
+    out_filename = f'{filename}.{to}'
+
+    return Response(
+        content=out_bytes,
+        headers={
+            'Content-Disposition': content_disposition(out_filename)
+            },
+        media_type=get_mimetype(f'.{to}'),
+    )

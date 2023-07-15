@@ -7,6 +7,7 @@ class VideoInfo(BaseModel):
     title: str
     thumbUrl: Optional[str]
     url: Optional[str]
+    filesize_approx: Optional[int] #  An estimate for the number of bytes
 
 class ProgressInfo(BaseModel):
     download_id : int

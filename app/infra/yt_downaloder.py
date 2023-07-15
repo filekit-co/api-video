@@ -1,9 +1,9 @@
 import io
+from contextlib import redirect_stdout
 from enum import auto
 
 from utils import StrEnum
 from yt_dlp import YoutubeDL
-from yt_dlp.postprocessor.ffmpeg import FFmpegExtractAudioPP
 
 
 class AudioTypeEnum(StrEnum):
@@ -20,18 +20,34 @@ class AudioTypeEnum(StrEnum):
 SUPPORTED_AUDIO_EXTS = AudioTypeEnum.choices()
 
 
-base_ydl_opts = {
-    "outtmpl": "-",
-    'logtostderr': True,
+class VideoTypeEnum(StrEnum):
+    avi = auto()
+    flv = auto()
+    mkv = auto()
+    mov = auto()
+    mp4 = auto()
+    webm = auto()
+
+SUPPORTED_VIDEO_EXTS = VideoTypeEnum.choices()
+
+
+BASE_YDL_OPTS = {
+    "outtmpl": "-", # for stream bytes download
+    'logtostderr': True, # for stream bytes download
     'noplaylist': True,
+    'playlist_items': '1:1',
+    'ignoreerrors': True,
     'quiet': True,
+    'concurrent_fragment_downloads': 5,
+    'verbose': True,
 }
 
-
+# i.g filename = ydl.get_filename(url)
 class Downloader(YoutubeDL):
 
-    def __init__(self):
-        super().__init__(base_ydl_opts)
+    def __init__(self, opts=None):
+        yd_opts = {**BASE_YDL_OPTS, **opts} if opts else BASE_YDL_OPTS
+        super().__init__(yd_opts)
 
     def try_info(self, url):
         try:
@@ -49,5 +65,38 @@ class Downloader(YoutubeDL):
             return ""
         return f"{info['id']}.{info['extractor']}.{info['ext']}"
 
-    def to_audio(self, ext: str):
-        self.add_post_processor(FFmpegExtractAudioPP(preferredcodec=ext))
+# https://github.com/yt-dlp/yt-dlp/issues/3298#issuecomment-1181754989
+def download_audio(url: str, to_ext: AudioTypeEnum) -> bytes:
+    audio_ydl_opts = {
+    'format': f'm4a/bestaudio/best',
+    'postprocessors': [{  # Extract audio using ffmpeg
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': to_ext,
+    }]
+    }
+
+    with io.BytesIO() as buffer:
+        with redirect_stdout(buffer), Downloader(audio_ydl_opts) as ydl:
+            ydl.download([url])
+            return buffer.getvalue()
+        
+
+def download_video(url: str, to_ext: VideoTypeEnum, height: int) -> bytes:
+    video_ydl_opts = {
+        # 'format': f'bv*[ext={to_ext}]+ba/bestvideo[ext=mp4]+bestaudio[ext=m4a] / bv*+ba/b',
+        # 'format': f'bestvideo[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]+bestaudio/best[ext=mp4][filesize<{MAX_FILESIZE}]/best[filesize<{MAX_FILESIZE}]'
+        # 'format': f'best[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]/bestvideo[ext=mp4]+bestaudio[ext=m4a][filesize<{MAX_FILESIZE}]'
+        # 'format': f'best[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]'
+        # f'bestvideo[ext={to_ext}][height<={height}]+bestaudio/best[height<={height}]'
+        # 'format': f'bestvideo[ext={to_ext}][height<={height}]/best[ext=mp4]+bestaudio[ext=m4a]'
+        # 'format': f'best[filesize<1K][res<{res+1}]+bestaudio/best'
+        # 'format_sort': {'res': res, 'ext': to_ext}        
+        'format': f'b[ext={to_ext}]',
+        'format_sort': [f'height:{height}']
+    }
+
+    with io.BytesIO() as buffer:
+        with redirect_stdout(buffer), Downloader(video_ydl_opts) as ydl:
+            ydl.download([url])
+            return buffer.getvalue()
+        
