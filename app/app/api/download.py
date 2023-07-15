@@ -3,7 +3,7 @@ from contextlib import redirect_stdout
 from enum import Enum
 
 from fastapi import APIRouter, HTTPException, Response
-from infra.yt_downaloder import SUPPORTED_AUDIO_EXTS, Downloader
+from infra.yt_downaloder import SUPPORTED_AUDIO_EXTS, AudioTypeEnum, Downloader
 from utils import content_disposition, get_mimetype
 
 from app.models import VideoInfo
@@ -27,7 +27,7 @@ def download_audio(url: str, to_ext: str) -> bytes:
 async def download(
         url: str,
         filename: str,
-        to: str,
+        to: AudioTypeEnum,
     ):
     if to in SUPPORTED_AUDIO_EXTS:
         out_bytes = download_audio(url, to)

@@ -1,42 +1,37 @@
 import io
+from enum import auto
 
+from utils import StrEnum
 from yt_dlp import YoutubeDL
 from yt_dlp.postprocessor.ffmpeg import FFmpegExtractAudioPP
 
-from app.models import FormatInfo
+
+class AudioTypeEnum(StrEnum):
+    best = auto()
+    mp3 = auto()
+    aac = auto()
+    m4a = auto()
+    opus = auto()
+    vorbis = auto()
+    flac = auto()
+    alac = auto()
+    wav = auto()
+
+SUPPORTED_AUDIO_EXTS = AudioTypeEnum.choices()
 
 
-def process_hook_info(d):
-    info={
-        "status": d.get('status'),
-        "downloaded_bytes": d.get('downloaded_bytes',0),
-        "total_bytes": d.get('total_bytes',1),
-        "filename": d.get('filename','.\\').split("\\")[-1],
-    }
-    return info
-
-
-# ydl_opts = {
-#     'outtmpl': './downloads/%(id)s.%(extractor)s.%(ext)s',
-    # 'quiet': True,
-#     # 'no_color': True,
-#     'noplaylist': True
-# }
-
-ydl_opts = {
+base_ydl_opts = {
     "outtmpl": "-",
     'logtostderr': True,
     'noplaylist': True,
-    # 'quiet': True,
+    'quiet': True,
 }
 
-
-SUPPORTED_AUDIO_EXTS = ['mp3', 'aac', 'm4a', 'opus', 'vorbis', 'flac', 'alac', 'wav']
 
 class Downloader(YoutubeDL):
 
     def __init__(self):
-        super().__init__(ydl_opts)
+        super().__init__(base_ydl_opts)
 
     def try_info(self, url):
         try:
