@@ -1,5 +1,7 @@
 import logging
+from typing import Optional
 
+import yt_dlp
 from fastapi import APIRouter, HTTPException, Response
 from infra.yt_downaloder import (SUPPORTED_AUDIO_EXTS, SUPPORTED_VIDEO_EXTS,
                                  AudioTypeEnum, Downloader, VideoTypeEnum,
@@ -68,13 +70,17 @@ async def video(
         url: str,
         filename: str,
         to: VideoTypeEnum,
-        height: int,
+        height: Optional[int]=None,
     ):
 
-    if to in SUPPORTED_VIDEO_EXTS:
-        out_bytes = download_video(url, to, height)
-    else:
-        raise HTTPException(status_code=400, detail=f"{to} is not supported")
+    try:
+        if to in SUPPORTED_VIDEO_EXTS:
+            out_bytes = download_video(url, to, height)
+        else:
+            raise HTTPException(status_code=400, detail=f"{to} is not supported")
+    except yt_dlp.utils.DownloadError as e:
+        raise HTTPException(status_code=500, detail=e.msg)
+
     
     out_filename = f'{filename}.{to}'
 

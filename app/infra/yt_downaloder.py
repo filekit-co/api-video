@@ -36,7 +36,6 @@ BASE_YDL_OPTS = {
     'logtostderr': True, # for stream bytes download
     'noplaylist': True,
     'playlist_items': '1:1',
-    'ignoreerrors': True,
     'quiet': True,
     'concurrent_fragment_downloads': 5,
     'verbose': True,
@@ -82,18 +81,23 @@ def download_audio(url: str, to_ext: AudioTypeEnum) -> bytes:
         
 
 def download_video(url: str, to_ext: VideoTypeEnum, height: int) -> bytes:
-    video_ydl_opts = {
-        # 'format': f'bv*[ext={to_ext}]+ba/bestvideo[ext=mp4]+bestaudio[ext=m4a] / bv*+ba/b',
-        # 'format': f'bestvideo[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]+bestaudio/best[ext=mp4][filesize<{MAX_FILESIZE}]/best[filesize<{MAX_FILESIZE}]'
-        # 'format': f'best[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]/bestvideo[ext=mp4]+bestaudio[ext=m4a][filesize<{MAX_FILESIZE}]'
-        # 'format': f'best[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]'
-        # f'bestvideo[ext={to_ext}][height<={height}]+bestaudio/best[height<={height}]'
-        # 'format': f'bestvideo[ext={to_ext}][height<={height}]/best[ext=mp4]+bestaudio[ext=m4a]'
-        # 'format': f'best[filesize<1K][res<{res+1}]+bestaudio/best'
-        # 'format_sort': {'res': res, 'ext': to_ext}        
-        'format': f'b[ext={to_ext}]',
-        'format_sort': [f'height:{height}']
-    }
+    if height:
+        video_ydl_opts = {
+            # 'format': f'bv*[ext={to_ext}]+ba/bestvideo[ext=mp4]+bestaudio[ext=m4a] / bv*+ba/b',
+            # 'format': f'bestvideo[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]+bestaudio/best[ext=mp4][filesize<{MAX_FILESIZE}]/best[filesize<{MAX_FILESIZE}]'
+            # 'format': f'best[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]/bestvideo[ext=mp4]+bestaudio[ext=m4a][filesize<{MAX_FILESIZE}]'
+            # 'format': f'best[ext={to_ext}][filesize<{MAX_FILESIZE}][height<={height}]'
+            # f'bestvideo[ext={to_ext}][height<={height}]+bestaudio/best[height<={height}]'
+            'format': f'best[ext={to_ext}][height<={height}]/best[ext=mp4]+bestaudio[ext=m4a]'
+            # 'format': f'best[filesize<1K][res<{res+1}]+bestaudio/best'
+            # 'format_sort': {'res': res, 'ext': to_ext}        
+            # 'format': f'b[ext={to_ext}]',
+            # 'format_sort': [f'height:{height}']
+        }
+    else:
+        video_ydl_opts = { 
+            'format': f'best[ext={to_ext}]/best[ext=mp4]+bestaudio[ext=m4a]'
+        }
 
     with io.BytesIO() as buffer:
         with redirect_stdout(buffer), Downloader(video_ydl_opts) as ydl:
