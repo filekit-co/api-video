@@ -1,3 +1,4 @@
 app/poetry.lock
 app/pyproject.toml
 __pycache__/
+downloads/*
