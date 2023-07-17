@@ -36,7 +36,7 @@ BASE_YDL_OPTS = {
     'logtostderr': True, # for stream bytes download
     'noplaylist': True,
     'playlist_items': '1:1',
-    'quiet': True,
+    'verbose': True,
 }
 
 # i.g filename = ydl.get_filename(url)
