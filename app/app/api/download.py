@@ -3,10 +3,11 @@ from typing import Optional
 
 import yt_dlp
 from fastapi import APIRouter, HTTPException, Response
+from fastapi.responses import StreamingResponse
 from infra.yt_downaloder import (SUPPORTED_AUDIO_EXTS, SUPPORTED_VIDEO_EXTS,
                                  AudioTypeEnum, Downloader, VideoTypeEnum,
                                  download_audio, download_video)
-from utils import content_disposition, get_mimetype
+from utils import content_disposition, generate_chunks, get_mimetype
 
 from app.models import VideoInfo
 
@@ -44,15 +45,14 @@ async def audio(
         filename: str,
         to: AudioTypeEnum,
     ):
-    if to in SUPPORTED_AUDIO_EXTS:
-        out_bytes = download_audio(url, to)
-    else:
+    if to not in SUPPORTED_AUDIO_EXTS:
         raise HTTPException(status_code=400, detail=f"{to} is not supported")
     
     out_filename = f'{filename}.{to}'
+    out_bytes = download_audio(url, to)
 
     return Response(
-        content=out_bytes,
+        content=generate_chunks(out_bytes),
         headers={
             'Content-Disposition': content_disposition(out_filename)
             },
@@ -74,20 +74,17 @@ async def video(
     ):
 
     try:
-        if to in SUPPORTED_VIDEO_EXTS:
-            out_bytes = download_video(url, to, height)
-        else:
+        if to not in SUPPORTED_VIDEO_EXTS:
             raise HTTPException(status_code=400, detail=f"{to} is not supported")
+
+        out_filename = f'{filename}.{to}'
+        out_bytes: bytes = download_video(url, to, height)
+        return StreamingResponse(
+            content=generate_chunks(out_bytes),
+            headers={
+                'Content-Disposition': content_disposition(out_filename)
+                },
+            media_type=get_mimetype(f'.{to}'),
+        )
     except yt_dlp.utils.DownloadError as e:
         raise HTTPException(status_code=500, detail=e.msg)
-
-    
-    out_filename = f'{filename}.{to}'
-
-    return Response(
-        content=out_bytes,
-        headers={
-            'Content-Disposition': content_disposition(out_filename)
-            },
-        media_type=get_mimetype(f'.{to}'),
-    )

@@ -36,6 +36,7 @@ BASE_YDL_OPTS = {
     'logtostderr': True, # for stream bytes download
     'noplaylist': True,
     'playlist_items': '1:1',
+    'concurrent_fragment_downloads': 5,
     'verbose': True,
 }
 
