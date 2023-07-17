@@ -37,8 +37,6 @@ BASE_YDL_OPTS = {
     'noplaylist': True,
     'playlist_items': '1:1',
     'quiet': True,
-    'concurrent_fragment_downloads': 5,
-    'verbose': True,
 }
 
 # i.g filename = ydl.get_filename(url)
