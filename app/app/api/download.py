@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 import yt_dlp
@@ -21,7 +20,6 @@ router = APIRouter()
 async def info(url: str):
     with Downloader() as ydl:    
         info = ydl.get_info(url)
-        logging.error(info)
         if info is None:
             raise HTTPException(status_code=400, detail="URL not supported")
         else:
@@ -49,9 +47,8 @@ async def audio(
         raise HTTPException(status_code=400, detail=f"{to} is not supported")
     
     out_filename = f'{filename}.{to}'
-    out_bytes = download_audio(url, to)
-
-    return Response(
+    out_bytes = await download_audio(url, to)
+    return StreamingResponse(
         content=generate_chunks(out_bytes),
         headers={
             'Content-Disposition': content_disposition(out_filename)
@@ -78,7 +75,7 @@ async def video(
             raise HTTPException(status_code=400, detail=f"{to} is not supported")
 
         out_filename = f'{filename}.{to}'
-        out_bytes: bytes = download_video(url, to, height)
+        out_bytes: bytes = await download_video(url, to, height)
         return StreamingResponse(
             content=generate_chunks(out_bytes),
             headers={

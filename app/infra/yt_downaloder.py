@@ -64,7 +64,7 @@ class Downloader(YoutubeDL):
         return f"{info['id']}.{info['extractor']}.{info['ext']}"
 
 # https://github.com/yt-dlp/yt-dlp/issues/3298#issuecomment-1181754989
-def download_audio(url: str, to_ext: AudioTypeEnum) -> bytes:
+async def download_audio(url: str, to_ext: AudioTypeEnum) -> bytes:
     audio_ydl_opts = {
     'format': f'm4a/bestaudio/best',
     'postprocessors': [{  # Extract audio using ffmpeg
@@ -79,7 +79,7 @@ def download_audio(url: str, to_ext: AudioTypeEnum) -> bytes:
             return buffer.getvalue()
         
 
-def download_video(url: str, to_ext: VideoTypeEnum, height: int) -> bytes:
+async def download_video(url: str, to_ext: VideoTypeEnum, height: int) -> bytes:
     if height:
         video_ydl_opts = {
             # 'format': f'bv*[ext={to_ext}]+ba/bestvideo[ext=mp4]+bestaudio[ext=m4a] / bv*+ba/b',

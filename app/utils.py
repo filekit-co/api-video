@@ -6,7 +6,7 @@ from typing import AsyncIterator
 
 mimetypes.init()
 
-_CHUNK_SIZE = 10 * 1024 * 1024 #10MB
+_CHUNK_SIZE = 10 * 1024 * 1024 # 10MB
 
 def content_disposition(filename):
     filename = urllib.parse.quote(filename)
