@@ -2,9 +2,9 @@
 
 Stream Data to Stream Data
 
-- [web](https://youtubetomp3.pages.dev/)
-- [front source code](https://github.com/filekit-co/youTubetoMP3)
-- [swagger](https://api-video-xgnu4lf2ea-uc.a.run.app/docs)
+- webpage: https://youtubetomp3.pages.dev
+- front source code: https://github.com/filekit-co/youTubetoMP3
+- swagger: https://api-video-xgnu4lf2ea-uc.a.run.app/docs
 
 <div align='center'>
 <table width="100%" border="0">
